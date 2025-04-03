@@ -1,0 +1,29 @@
+@startuml Операция изменения статуса заказа
+!theme plain
+skinparam dpi 150
+skinparam DefaultFontSize 14
+skinparam ArrowColor black
+skinparam SequenceMessageAlign center
+skinparam SequenceGroupBackgroundColor #f0f0f0
+
+title Операция изменения статуса заказа
+
+actor "Оператор" as Operator
+participant "MES(UI)" as UI
+participant "MES API" as API
+participant "Cache" as Cache
+database "MES DB" as DB
+queue "RabbitMQ" as Queue
+
+Operator -> UI: Изменение статуса заказа
+UI -> API: Запрос на изменение статуса
+API -> DB: Обновление в БД
+DB --> API: Подтверждение
+API -> Cache: Инвалидация кеша по ключу
+Cache --> API: Подтверждение
+API -> Queue: Отправка события в очередь
+Queue --> API: Подтверждение доставки
+API --> UI: Подтверждение обновления
+UI --> Operator: Отображение обновленного статуса
+
+@enduml 

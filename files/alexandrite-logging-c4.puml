@@ -1,0 +1,84 @@
+@startuml Alexandrite System with Logging
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Jewerly Store System с компонентами логирования
+
+System_Boundary(alexandrite, "Jewerly Store System") {
+    Container(internetShop, "Internet Shop", "Container: Vue, TypeScript, Threejs")
+    Container(crm, "CRM", "Container: Vue, TypeScript")
+    Container(mes, "MES", "Container: React, TypeScript")
+    
+    Container(shopAPI, "Shop API", "Container: SpringBoot")
+    Container(crmAPI, "CRM API", "Container: SpringBoot")
+    Container(mesAPI, "MES API", "Container: C#")
+    
+    ContainerDb(shopDB, "Shop DB", "Container: PostgreSQL")
+    ContainerDb(mesDB, "MES db", "Container: PostgreSQL")
+    
+    Container(filesStorage, "3d files storage", "Container: S3-based storage")
+    Container(messageQueue, "Messages Queue", "Container: RabbitMQ")
+    
+    ' Новые компоненты логирования (выделены красным)
+    AddElementTag("logging", $bgColor="#FF6666")
+    
+    Container(filebeat, "Filebeat", "Container: Filebeat", "Collect logs from files", $tags="logging")
+    Container(metricbeat, "Metricbeat", "Container: Metricbeat", "Collect metrics", $tags="logging")
+    Container(logstash, "Logstash", "Container: Logstash", "Process and normalize logs", $tags="logging")
+    Container(elasticsearch, "Elasticsearch", "Container: Elasticsearch", "Store and index logs", $tags="logging")
+    Container(kibana, "Kibana", "Container: Kibana", "Visualize and analyze logs", $tags="logging")
+    Container(elastalert, "Elastalert", "Container: Elastalert", "Monitoring and alerting", $tags="logging")
+}
+
+Person(customer, "Customer", "Person")
+Person(seller, "Seller", "Person")
+Person(apiUser, "API user", "Person")
+Person(operator, "Operator", "Person")
+Person(supportEngineer, "Support Engineer", "Person", $tags="logging")
+Person(developer, "Developer", "Person", $tags="logging")
+
+Rel(customer, internetShop, "Uses")
+Rel(seller, crm, "Uses")
+Rel(apiUser, shopAPI, "Uses API")
+Rel(operator, mes, "Uses")
+Rel(supportEngineer, kibana, "Analyzes logs", $tags="logging")
+Rel(developer, kibana, "Debugs with logs", $tags="logging")
+
+Rel(internetShop, shopAPI, "Uses")
+Rel(crm, crmAPI, "Uses")
+Rel(mes, mesAPI, "Uses")
+
+Rel(shopAPI, shopDB, "Uses")
+Rel(crmAPI, shopDB, "Uses")
+Rel(mesAPI, mesDB, "Uses")
+
+Rel(shopAPI, filesStorage, "uploads files")
+Rel(crmAPI, filesStorage, "Uses")
+Rel(mesAPI, filesStorage, "Uses")
+
+Rel(shopAPI, messageQueue, "Sends orders")
+Rel(messageQueue, crmAPI, "Delivers orders")
+Rel(crmAPI, messageQueue, "Sends statuses")
+Rel(messageQueue, mesAPI, "Delivers orders")
+Rel(mesAPI, messageQueue, "Sends statuses")
+Rel(messageQueue, shopAPI, "Delivers statuses")
+
+Rel(internetShop, filebeat, "Logs to", $tags="logging")
+Rel(crm, filebeat, "Logs to", $tags="logging")
+Rel(mes, filebeat, "Logs to", $tags="logging")
+Rel(shopAPI, filebeat, "Logs to", $tags="logging")
+Rel(crmAPI, filebeat, "Logs to", $tags="logging")
+Rel(mesAPI, filebeat, "Logs to", $tags="logging")
+Rel(messageQueue, filebeat, "Logs to", $tags="logging")
+Rel(shopDB, metricbeat, "Metrics from", $tags="logging")
+Rel(mesDB, metricbeat, "Metrics from", $tags="logging")
+
+Rel(filebeat, logstash, "Sends logs", $tags="logging")
+Rel(metricbeat, logstash, "Sends metrics", $tags="logging")
+Rel(logstash, elasticsearch, "Stores processed logs", $tags="logging")
+Rel(elasticsearch, kibana, "Provides data for", $tags="logging")
+Rel(elasticsearch, elastalert, "Monitors", $tags="logging")
+Rel(elastalert, supportEngineer, "Sends alerts", $tags="logging")
+
+@enduml 

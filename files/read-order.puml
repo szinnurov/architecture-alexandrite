@@ -1,0 +1,28 @@
+@startuml Операция чтения списка заказов с кешированием
+!theme plain
+skinparam dpi 150
+skinparam DefaultFontSize 14
+skinparam ArrowColor black
+skinparam SequenceMessageAlign center
+skinparam SequenceGroupBackgroundColor #f0f0f0
+
+title Операция чтения списка заказов с кешированием
+
+actor "Оператор" as Operator
+participant "MES(UI)" as UI
+participant "MES API" as API
+participant "Cache" as Cache
+database "MES DB" as DB
+
+Operator -> UI: Запрос списка заказов
+UI -> API: Запрос списка заказов
+API -> Cache: Проверка кеша по ключу
+Cache --> API: Cache Miss
+API -> DB: Запрос данных из БД
+DB --> API: Данные из БД
+API -> Cache: Сохранение в кеш
+Cache --> API: Подтверждение
+API --> UI: Ответ со списком заказов
+UI --> Operator: Отображение списка заказов
+
+@enduml
