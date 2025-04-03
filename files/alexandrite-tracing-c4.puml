@@ -1,0 +1,74 @@
+@startuml Alexandrite System with Tracing
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Jewerly Store System с компонентами трейсинга
+
+System_Boundary(alexandrite, "Jewerly Store System") {
+    Container(internetShop, "Internet Shop", "Container: Vue, TypeScript, Threejs")
+    Container(crm, "CRM", "Container: Vue, TypeScript")
+    Container(mes, "MES", "Container: React, TypeScript")
+    
+    Container(shopAPI, "Shop API", "Container: SpringBoot")
+    Container(crmAPI, "CRM API", "Container: SpringBoot")
+    Container(mesAPI, "MES API", "Container: C#")
+    
+    ContainerDb(shopDB, "Shop DB", "Container: PostgreSQL")
+    ContainerDb(mesDB, "MES db", "Container: PostgreSQL")
+    
+    Container(filesStorage, "3d files storage", "Container: S3-based storage")
+    Container(messageQueue, "Messages Queue", "Container: RabbitMQ")
+    
+    ' Новые компоненты трейсинга (выделены красным)
+    AddElementTag("tracing", $bgColor="#FF6666")
+    
+    Container(otelCollector, "OpenTelemetry Collector", "Container: OpenTelemetry", "Collects and processes tracing data", $tags="tracing")
+    Container(jaeger, "Jaeger", "Container: Jaeger", "Stores, analyzes and visualizes traces", $tags="tracing")
+    ContainerDb(elasticStorage, "Tracing Storage", "Container: Elasticsearch", "Long-term storage of tracing data", $tags="tracing")
+}
+
+Person(customer, "Customer", "Person")
+Person(seller, "Seller", "Person")
+Person(apiUser, "API user", "Person")
+Person(operator, "Operator", "Person")
+Person(developer, "Developer", $tags="tracing")
+
+Rel(customer, internetShop, "Uses")
+Rel(seller, crm, "Uses")
+Rel(apiUser, shopAPI, "Uses API")
+Rel(operator, mes, "Uses")
+Rel(developer, jaeger, "Analyzes traces", $tags="tracing")
+
+Rel(internetShop, shopAPI, "Uses")
+Rel(crm, crmAPI, "Uses")
+Rel(mes, mesAPI, "Uses")
+
+Rel(shopAPI, shopDB, "Uses")
+Rel(crmAPI, shopDB, "Uses")
+Rel(mesAPI, mesDB, "Uses")
+
+Rel(shopAPI, filesStorage, "uploads files")
+Rel(crmAPI, filesStorage, "Uses")
+Rel(mesAPI, filesStorage, "Uses")
+
+Rel(shopAPI, messageQueue, "Sends orders")
+Rel(messageQueue, crmAPI, "Delivers orders")
+Rel(crmAPI, messageQueue, "Sends statuses")
+Rel(messageQueue, mesAPI, "Delivers orders")
+Rel(mesAPI, messageQueue, "Sends statuses")
+Rel(messageQueue, shopAPI, "Delivers statuses")
+
+' Новые связи для трейсинга (красные)
+Rel(internetShop, otelCollector, "Sends traces", $tags="tracing")
+Rel(shopAPI, otelCollector, "Sends traces", $tags="tracing")
+Rel(crm, otelCollector, "Sends traces", $tags="tracing")
+Rel(crmAPI, otelCollector, "Sends traces", $tags="tracing")
+Rel(mes, otelCollector, "Sends traces", $tags="tracing")
+Rel(mesAPI, otelCollector, "Sends traces", $tags="tracing")
+Rel(messageQueue, otelCollector, "Sends traces", $tags="tracing")
+
+Rel(otelCollector, jaeger, "Transfers tracing data", $tags="tracing")
+Rel(jaeger, elasticStorage, "Stores tracing data", $tags="tracing")
+
+@enduml
